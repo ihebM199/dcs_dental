@@ -1,9 +1,11 @@
 import Link from "next/link"
 import { AlertTriangle } from "lucide-react"
-import { products, getStockLevel } from "@/lib/data"
+import { getStockLevel } from "@/lib/data"
+import { fetchProducts } from "@/lib/api"
 import { StockIndicator } from "@/components/stock-indicator"
 
-export function StockAlerts() {
+export async function StockAlerts() {
+  const products = await fetchProducts()
   const lowStock = products.filter((p) => getStockLevel(p) === "low").slice(0, 3)
   if (lowStock.length === 0) return null
 

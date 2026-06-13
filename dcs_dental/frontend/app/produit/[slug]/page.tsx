@@ -1,9 +1,9 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import { ShopLayout } from "@/components/shop-layout"
 import { ProductCard } from "@/components/product-card"
-import { getProductBySlug, relatedProducts } from "@/lib/data"
+import { fetchProductBySlug } from "@/lib/api"
 import { formatPrice } from "@/lib/utils"
 import { useCart } from "@/components/cart-provider"
 import { StockIndicator } from "@/components/stock-indicator"
@@ -19,11 +19,37 @@ interface PageProps {
 
 export default function ProductDetailPage({ params }: PageProps) {
   const { slug } = use(params)
-  const product = getProductBySlug(slug)
+  const [product, setProduct] = useState<(Product & { relatedProductsList?: Product[] }) | null>(null)
+  const [loading, setLoading] = useState(true)
   const { add } = useCart()
 
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
+
+  useEffect(() => {
+    async function loadProduct() {
+      try {
+        setLoading(true)
+        const p = await fetchProductBySlug(slug)
+        setProduct(p)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProduct()
+  }, [slug])
+
+  if (loading) {
+    return (
+      <ShopLayout>
+        <div className="mx-auto max-w-6xl px-4 py-16 text-center text-muted-foreground">
+          Chargement du produit...
+        </div>
+      </ShopLayout>
+    )
+  }
 
   if (!product) {
     return (
@@ -50,7 +76,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     })
   }
 
-  const related = relatedProducts(product, 4)
+  const related = product.relatedProductsList || []
 
   return (
     <ShopLayout>

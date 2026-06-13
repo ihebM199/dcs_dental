@@ -1,13 +1,48 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { ShopLayout } from "@/components/shop-layout"
 import { ProductCard } from "@/components/product-card"
-import { products, coupons } from "@/lib/data"
+import { fetchProducts, fetchCoupons } from "@/lib/api"
+import type { Product, Coupon } from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
 import { Tag, Calendar } from "lucide-react"
 
 export default function PromotionsPage() {
-  const promoProducts = products.filter((p) => p.isPromo || p.oldPrice)
+  const [productsList, setProductsList] = useState<Product[]>([])
+  const [couponsList, setCouponsList] = useState<Coupon[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const [p, c] = await Promise.all([
+          fetchProducts(),
+          fetchCoupons()
+        ])
+        setProductsList(p)
+        setCouponsList(c)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const promoProducts = productsList.filter((p) => p.isPromo || p.oldPrice)
+
+  if (loading) {
+    return (
+      <ShopLayout>
+        <div className="mx-auto max-w-6xl px-4 py-16 text-center text-muted-foreground">
+          Chargement des promotions...
+        </div>
+      </ShopLayout>
+    )
+  }
 
   return (
     <ShopLayout>
@@ -27,7 +62,7 @@ export default function PromotionsPage() {
             <Tag className="size-5 text-primary" /> Codes de réduction disponibles
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {coupons.map((c) => (
+            {couponsList.map((c) => (
               <div
                 key={c.code}
                 className="relative overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-5 shadow-sm"

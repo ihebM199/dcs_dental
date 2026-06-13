@@ -4,7 +4,8 @@ import { useState } from "react"
 import { ShopLayout } from "@/components/shop-layout"
 import { useCart } from "@/components/cart-provider"
 import { formatPrice } from "@/lib/utils"
-import { coupons, roles } from "@/lib/data"
+import { validateCoupon } from "@/lib/api"
+import { roles } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,16 +31,19 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState("")
 
   // Coupon handling
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault()
-    const coupon = coupons.find((c) => c.code.toUpperCase() === couponCode.trim().toUpperCase())
-
-    if (coupon) {
-      setAppliedDiscount(coupon.discountPct)
-      setActiveCoupon(coupon.code)
-      toast.success(`Code promo appliqué ! Vous bénéficiez de -${coupon.discountPct}%`)
-    } else {
-      toast.error("Code promo invalide ou expiré")
+    try {
+      const coupon = await validateCoupon(couponCode)
+      if (coupon && coupon.isValid) {
+        setAppliedDiscount(coupon.discountPct)
+        setActiveCoupon(coupon.code)
+        toast.success(`Code promo appliqué ! Vous bénéficiez de -${coupon.discountPct}%`)
+      } else {
+        toast.error("Code promo invalide ou expiré")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Code promo invalide ou expiré")
     }
   }
 

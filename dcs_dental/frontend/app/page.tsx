@@ -7,9 +7,12 @@ import { Testimonials } from "@/components/home/testimonials"
 import { BrandsStrip } from "@/components/home/brands-strip"
 import { FaqSection } from "@/components/home/faq-section"
 import { Newsletter } from "@/components/home/newsletter"
-import { products } from "@/lib/data"
+import { fetchProducts } from "@/lib/api"
 
-export default function HomePage() {
+export const dynamic = "force-dynamic"
+
+export default async function HomePage() {
+  const products = await fetchProducts()
   const bestSellers = products.filter((p) => p.isBestSeller)
   const promos = products.filter((p) => p.isPromo)
   const newArrivals = products.filter((p) => p.isNew)

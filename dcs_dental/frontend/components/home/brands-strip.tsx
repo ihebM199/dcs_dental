@@ -1,6 +1,7 @@
-import { brands } from "@/lib/data"
+import { fetchBrands } from "@/lib/api"
 
-export function BrandsStrip() {
+export async function BrandsStrip() {
+  const brands = await fetchBrands()
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
       <h2 className="mb-4 text-center text-sm font-semibold uppercase tracking-wide text-muted-foreground">

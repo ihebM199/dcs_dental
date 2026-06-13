@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, Moon, Search, ShoppingCart, Sun, User } from "lucide-react"
@@ -16,7 +17,8 @@ import {
 } from "@/components/ui/sheet"
 import { useCart } from "@/components/cart-provider"
 import { useTheme } from "@/components/theme-provider"
-import { categories } from "@/lib/data"
+import { fetchCategories } from "@/lib/api"
+import type { Category } from "@/lib/data"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
@@ -30,6 +32,21 @@ export function SiteHeader() {
   const pathname = usePathname()
   const { count } = useCart()
   const { theme, toggleTheme } = useTheme()
+  const [categoriesList, setCategoriesList] = useState<Category[]>([])
+
+  useEffect(() => {
+    let active = true
+    async function loadCategories() {
+      try {
+        const cats = await fetchCategories()
+        if (active) setCategoriesList(cats)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    loadCategories()
+    return () => { active = false }
+  }, [])
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -86,7 +103,7 @@ export function SiteHeader() {
                 <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Catégories
                 </p>
-                {categories.slice(0, 6).map((c) => (
+                {categoriesList.slice(0, 6).map((c) => (
                   <Link
                     key={c.id}
                     href={`/catalogue?cat=${c.slug}`}

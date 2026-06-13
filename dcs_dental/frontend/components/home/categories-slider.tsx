@@ -9,7 +9,7 @@ import {
   Syringe,
   Stethoscope,
 } from "lucide-react"
-import { categories } from "@/lib/data"
+import { fetchCategories } from "@/lib/api"
 
 const icons: Record<string, typeof Boxes> = {
   instruments: Scissors,
@@ -22,7 +22,8 @@ const icons: Record<string, typeof Boxes> = {
   mobilier: Stethoscope,
 }
 
-export function CategoriesSlider() {
+export async function CategoriesSlider() {
+  const categories = await fetchCategories()
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-4 flex items-end justify-between">

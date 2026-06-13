@@ -1,10 +1,11 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { useState, useMemo, Suspense } from "react"
+import { useState, useMemo, useEffect, Suspense } from "react"
 import { ShopLayout } from "@/components/shop-layout"
 import { ProductCard } from "@/components/product-card"
-import { products, categories, brands } from "@/lib/data"
+import { fetchProducts, fetchCategories, fetchBrands } from "@/lib/api"
+import type { Product, Category, Brand } from "@/lib/data"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal, X } from "lucide-react"
@@ -13,14 +14,44 @@ function CatalogueContent() {
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get("cat") || ""
 
+  const [productsList, setProductsList] = useState<Product[]>([])
+  const [categoriesList, setCategoriesList] = useState<Category[]>([])
+  const [brandsList, setBrandsList] = useState<Brand[]>([])
+  const [loading, setLoading] = useState(true)
+
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
   const [selectedBrand, setSelectedBrand] = useState<string>("")
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [priceRange, setPriceRange] = useState<number>(10000)
 
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const [p, c, b] = await Promise.all([
+          fetchProducts(),
+          fetchCategories(),
+          fetchBrands(),
+        ])
+        setProductsList(p)
+        setCategoriesList(c)
+        setBrandsList(b)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  useEffect(() => {
+    setSelectedCategory(searchParams.get("cat") || "")
+  }, [searchParams])
+
   // Filter products
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return productsList.filter((p) => {
       const matchCat = selectedCategory
         ? p.category.toLowerCase() === selectedCategory.toLowerCase()
         : true
@@ -35,13 +66,21 @@ function CatalogueContent() {
       const matchPrice = p.price <= priceRange
       return matchCat && matchBrand && matchSearch && matchPrice
     })
-  }, [selectedCategory, selectedBrand, searchQuery, priceRange])
+  }, [productsList, selectedCategory, selectedBrand, searchQuery, priceRange])
 
   const clearFilters = () => {
     setSelectedCategory("")
     setSelectedBrand("")
     setSearchQuery("")
     setPriceRange(10000)
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-16 text-center text-muted-foreground">
+        Chargement du catalogue...
+      </div>
+    )
   }
 
   return (
@@ -88,10 +127,10 @@ function CatalogueContent() {
                   }`}
                 >
                   <span>Tous les produits</span>
-                  <span className="text-xs opacity-75">{products.length}</span>
+                  <span className="text-xs opacity-75">{productsList.length}</span>
                 </button>
-                {categories.map((c) => {
-                  const count = products.filter((p) => p.category.toLowerCase() === c.slug.toLowerCase()).length
+                {categoriesList.map((c) => {
+                  const count = productsList.filter((p) => p.category.toLowerCase() === c.slug.toLowerCase()).length
                   return (
                     <button
                       key={c.id}
@@ -120,7 +159,7 @@ function CatalogueContent() {
                 >
                   <span>Toutes les marques</span>
                 </button>
-                {brands.map((b) => (
+                {brandsList.map((b) => (
                   <button
                     key={b.id}
                     onClick={() => setSelectedBrand(b.name)}
@@ -157,7 +196,7 @@ function CatalogueContent() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-foreground">
               {selectedCategory
-                ? categories.find((c) => c.slug === selectedCategory)?.name || "Produits"
+                ? categoriesList.find((c) => c.slug === selectedCategory)?.name || "Produits"
                 : "Catalogue"}
             </h1>
             <p className="text-sm text-muted-foreground">
