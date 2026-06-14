@@ -5,9 +5,11 @@ import { Mail } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { subscribeNewsletter } from "@/lib/newsletter"
 
 export function Newsletter() {
   const [email, setEmail] = useState("")
+  const [loading, setLoading] = useState(false)
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8">
@@ -23,13 +25,25 @@ export function Newsletter() {
           matériel dentaire et paramédical.
         </p>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault()
-            if (!email) return
-            toast.success("Inscription confirmée", {
-              description: "Merci, vous recevrez bientôt nos offres.",
-            })
-            setEmail("")
+            if (!email || loading) return
+            setLoading(true)
+            try {
+              await subscribeNewsletter(email)
+              toast.success("Inscription confirmée", {
+                description: "Merci, vous recevrez bientôt nos offres.",
+              })
+              setEmail("")
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Impossible de s'inscrire à la newsletter.",
+              )
+            } finally {
+              setLoading(false)
+            }
           }}
           className="mx-auto mt-5 flex max-w-md flex-col gap-3 sm:flex-row"
         >
@@ -40,13 +54,15 @@ export function Newsletter() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Votre adresse e-mail"
             aria-label="Adresse e-mail"
+            disabled={loading}
             className="border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/60"
           />
           <Button
             type="submit"
+            disabled={loading}
             className="bg-accent text-accent-foreground hover:bg-accent/90"
           >
-            S&apos;inscrire
+            {loading ? "Inscription..." : "S'inscrire"}
           </Button>
         </form>
       </div>

@@ -103,6 +103,13 @@ class OrderCreateSerializer(serializers.Serializer):
         order.final_amount = total - discount
         order.save()
 
+        try:
+            from apps.notifications.tasks import send_order_admin_notification
+            from apps.notifications.utils import dispatch_task
+            dispatch_task(send_order_admin_notification, order.id)
+        except Exception:
+            pass
+
         return order
 
 
