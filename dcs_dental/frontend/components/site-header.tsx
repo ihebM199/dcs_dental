@@ -15,6 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useAuth } from "@/components/auth-provider"
 import { useCart } from "@/components/cart-provider"
 import { useTheme } from "@/components/theme-provider"
 import { fetchCategories } from "@/lib/api"
@@ -30,6 +31,7 @@ const navLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname()
+  const { user } = useAuth()
   const { count } = useCart()
   const { theme, toggleTheme } = useTheme()
   const [categoriesList, setCategoriesList] = useState<Category[]>([])
@@ -55,9 +57,20 @@ export function SiteHeader() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-1.5 text-xs">
           <p>Livraison gratuite et rapide • Paiement à la livraison</p>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="hover:underline">
-              Mon compte
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="hover:underline">
+                Mon compte ({user.first_name})
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="hover:underline">
+                  Connexion
+                </Link>
+                <Link href="/register" className="hover:underline">
+                  Créer un compte
+                </Link>
+              </>
+            )}
             <Link href="/support" className="hover:underline">
               Aide
             </Link>
@@ -163,10 +176,10 @@ export function SiteHeader() {
             )}
           </Button>
           <Button
-            render={<Link href="/login" />}
+            render={<Link href={user ? "/dashboard" : "/login"} />}
             variant="ghost"
             size="icon"
-            aria-label="Mon compte"
+            aria-label={user ? "Mon compte" : "Se connecter"}
             className="hidden sm:inline-flex"
           >
             <User className="size-5" />

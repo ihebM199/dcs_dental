@@ -11,3 +11,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # CORS - allow all in development
 CORS_ALLOW_ALL_ORIGINS = True
+REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = []
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {}

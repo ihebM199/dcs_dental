@@ -1,29 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { ShopLayout } from "@/components/shop-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { User, Phone, MapPin, Briefcase, ShoppingBag, LogOut, CheckCircle, Package } from "lucide-react"
-import { useRouter } from "next/navigation"
+import {
+  User,
+  Phone,
+  MapPin,
+  Briefcase,
+  ShoppingBag,
+  LogOut,
+  CheckCircle,
+  Package,
+} from "lucide-react"
+import { useAuth } from "@/components/auth-provider"
 
 export default function DashboardPage() {
   const router = useRouter()
-
-  // Profile state
-  const [profile, setProfile] = useState({
-    name: "Dr. Ahmed Ben Ali",
-    email: "dr.ahmed@example.com",
-    phone: "+216 98 765 432",
-    profession: "Dentiste",
-    location: "Sousse, Tunisie",
-  })
+  const { user, isLoading, logout } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    profession: "",
+    location: "",
+  })
 
-  // Mock orders list
-  const [orders] = useState([
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/login")
+    }
+  }, [isLoading, user, router])
+
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        profession: user.profession_display,
+        location: user.location,
+      })
+    }
+  }, [user])
+
+  const orders = [
     {
       id: "CMD-829103",
       date: "12 Juin 2026",
@@ -38,7 +64,7 @@ export default function DashboardPage() {
       items: "2x Composite photopolymérisable, 1x Kit fraises diamantées",
       total: "785 TND",
     },
-  ])
+  ]
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,8 +73,19 @@ export default function DashboardPage() {
   }
 
   const handleLogout = () => {
+    logout()
     toast.success("Déconnexion réussie.")
     router.push("/")
+  }
+
+  if (isLoading || !user) {
+    return (
+      <ShopLayout>
+        <div className="mx-auto max-w-6xl px-4 py-16 text-center text-muted-foreground">
+          Chargement de votre espace...
+        </div>
+      </ShopLayout>
+    )
   }
 
   return (
@@ -59,20 +96,24 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
               Mon Espace Personnel
             </h1>
-            <p className="mt-1 text-muted-foreground text-sm">
+            <p className="mt-1 text-sm text-muted-foreground">
               Gérez votre profil professionnel et suivez vos achats.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="w-fit gap-1.5 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="w-fit gap-1.5 text-xs"
+          >
             <LogOut className="size-4 text-destructive" /> Déconnexion
           </Button>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
-          {/* Profile Card */}
           <div className="md:col-span-1">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
                 <User className="size-5 text-primary" /> Mon Profil
               </h2>
 
@@ -83,7 +124,9 @@ export default function DashboardPage() {
                     <Input
                       id="edit-name"
                       value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                      onChange={(e) =>
+                        setProfile({ ...profile, name: e.target.value })
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -92,7 +135,9 @@ export default function DashboardPage() {
                     <Input
                       id="edit-phone"
                       value={profile.phone}
-                      onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                      onChange={(e) =>
+                        setProfile({ ...profile, phone: e.target.value })
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -101,7 +146,9 @@ export default function DashboardPage() {
                     <Input
                       id="edit-location"
                       value={profile.location}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                      onChange={(e) =>
+                        setProfile({ ...profile, location: e.target.value })
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -128,7 +175,9 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <p className="font-bold text-foreground">{profile.name}</p>
-                      <p className="text-xs text-muted-foreground">{profile.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {profile.email}
+                      </p>
                     </div>
                   </div>
 
@@ -149,7 +198,12 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <Button variant="secondary" size="sm" onClick={() => setIsEditing(true)} className="w-full mt-4">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="mt-4 w-full"
+                  >
                     Modifier mes informations
                   </Button>
                 </div>
@@ -157,16 +211,16 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Orders Section */}
           <div className="md:col-span-2">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm h-full">
-              <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <ShoppingBag className="size-5 text-primary" /> Historique des commandes
+            <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
+                <ShoppingBag className="size-5 text-primary" /> Historique des
+                commandes
               </h2>
 
               {orders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-                  <Package className="size-10 mb-2" />
+                  <Package className="mb-2 size-10" />
                   <p>Vous n&apos;avez pas encore passé de commande.</p>
                 </div>
               ) : (
@@ -174,20 +228,29 @@ export default function DashboardPage() {
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="rounded-xl border border-border p-4 hover:border-muted-foreground/30 transition-colors"
+                      className="rounded-xl border border-border p-4 transition-colors hover:border-muted-foreground/30"
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3 mb-3 text-sm">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3 text-sm">
                         <div>
-                          <span className="font-bold text-foreground">{order.id}</span>
-                          <span className="text-xs text-muted-foreground ml-3">{order.date}</span>
+                          <span className="font-bold text-foreground">
+                            {order.id}
+                          </span>
+                          <span className="ml-3 text-xs text-muted-foreground">
+                            {order.date}
+                          </span>
                         </div>
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
-                          <CheckCircle className="size-3.5 fill-success/15" /> {order.status}
+                          <CheckCircle className="size-3.5 fill-success/15" />{" "}
+                          {order.status}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm gap-4">
-                        <div className="text-muted-foreground truncate">{order.items}</div>
-                        <div className="font-bold text-primary shrink-0">{order.total}</div>
+                      <div className="flex items-center justify-between gap-4 text-sm">
+                        <div className="truncate text-muted-foreground">
+                          {order.items}
+                        </div>
+                        <div className="shrink-0 font-bold text-primary">
+                          {order.total}
+                        </div>
                       </div>
                     </div>
                   ))}
