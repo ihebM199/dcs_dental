@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react"
 import {
+  fetchProfile,
   loadStoredSession,
   loginUser,
   registerUser,
@@ -34,8 +35,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setSession(loadStoredSession())
-    setIsLoading(false)
+    async function restoreSession() {
+      const stored = loadStoredSession()
+      if (!stored) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        const profile = await fetchProfile()
+        setSession({
+          ...stored,
+          user: profile,
+        })
+      } catch {
+        saveSession(null)
+        setSession(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    restoreSession()
   }, [])
 
   const value = useMemo<AuthContextValue>(

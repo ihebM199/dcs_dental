@@ -134,6 +134,9 @@ export default function CheckoutPage() {
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(error.message)
+        if (error.message.includes("reconnecter")) {
+          router.push("/login?next=/checkout")
+        }
       } else {
         toast.error("Impossible d'enregistrer la commande. Réessayez plus tard.")
       }

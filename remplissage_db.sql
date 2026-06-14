@@ -13,17 +13,23 @@
 BEGIN;
 
 -- ---------------------------------------------------------------------
--- Nettoyage (idempotent) : on vide les tables seed pour pouvoir
--- relancer ce script plusieurs fois sans erreur.
+-- Nettoyage (idempotent) : préserver les commandes existantes.
+-- TRUNCATE ... CASCADE sur products/promotions supprimerait les commandes.
 -- ---------------------------------------------------------------------
-TRUNCATE TABLE
-    products_productdetail,
-    products_productimage,
-    promotions_promocode,
-    products_product,
-    products_brand,
-    products_category
-RESTART IDENTITY CASCADE;
+UPDATE orders_order SET promo_code_id = NULL WHERE promo_code_id IS NOT NULL;
+UPDATE orders_orderitem SET product_id = NULL WHERE product_id IS NOT NULL;
+
+DELETE FROM products_productdetail;
+DELETE FROM products_productimage;
+DELETE FROM promotions_promocode;
+DELETE FROM products_product;
+DELETE FROM products_brand;
+DELETE FROM products_category;
+
+ALTER SEQUENCE products_category_id_seq RESTART WITH 1;
+ALTER SEQUENCE products_brand_id_seq RESTART WITH 1;
+ALTER SEQUENCE products_product_id_seq RESTART WITH 1;
+ALTER SEQUENCE promotions_promocode_id_seq RESTART WITH 1;
 
 -- =====================================================================
 -- 1. CATEGORIES
