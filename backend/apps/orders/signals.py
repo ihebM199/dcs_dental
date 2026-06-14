@@ -26,10 +26,10 @@ def order_status_notification(sender, instance, created, **kwargs):
 
     try:
         from apps.notifications.tasks import send_order_status_notification
-        from apps.notifications.utils import dispatch_task
+        from apps.notifications.utils import dispatch_after_commit
 
         old_status = getattr(instance, '_old_status', None)
         if old_status and old_status != instance.status:
-            dispatch_task(send_order_status_notification, instance.id, old_status)
+            dispatch_after_commit(send_order_status_notification, instance.id, old_status)
     except Exception:
         pass

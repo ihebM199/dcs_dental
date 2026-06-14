@@ -105,8 +105,8 @@ class OrderCreateSerializer(serializers.Serializer):
 
         try:
             from apps.notifications.tasks import send_order_admin_notification
-            from apps.notifications.utils import dispatch_task
-            dispatch_task(send_order_admin_notification, order.id)
+            from apps.notifications.utils import dispatch_after_commit
+            dispatch_after_commit(send_order_admin_notification, order.id)
         except Exception:
             pass
 

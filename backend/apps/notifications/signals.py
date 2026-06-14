@@ -4,7 +4,7 @@ Signals for promotion and product email notifications.
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from apps.notifications.utils import dispatch_task
+from apps.notifications.utils import dispatch_after_commit
 from apps.products.models import Product
 from apps.promotions.models import PromoCode
 
@@ -29,7 +29,7 @@ def promo_published_notification(sender, instance, created, **kwargs):
     if created or (not was_active and instance.is_active):
         try:
             from apps.notifications.tasks import send_promo_code_notification
-            dispatch_task(send_promo_code_notification, instance.id)
+            dispatch_after_commit(send_promo_code_notification, instance.id)
         except Exception:
             pass
 
@@ -54,6 +54,6 @@ def product_promo_published_notification(sender, instance, created, **kwargs):
     if created or (not was_promo and instance.is_promo):
         try:
             from apps.notifications.tasks import send_product_promo_notification
-            dispatch_task(send_product_promo_notification, instance.id)
+            dispatch_after_commit(send_product_promo_notification, instance.id)
         except Exception:
             pass
