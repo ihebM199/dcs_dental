@@ -14,15 +14,27 @@ import {
   Briefcase,
   ShoppingBag,
   LogOut,
-  CheckCircle,
   Package,
 } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
+import {
+  fetchOrders,
+  formatOrderDate,
+  formatOrderItemsSummary,
+  type Order,
+} from "@/lib/orders"
+import { formatPrice } from "@/lib/utils"
+
+function isAdminRole(role: string) {
+  return role === "ADMIN" || role === "SUPER_ADMIN"
+}
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user, isLoading, logout } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(true)
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -30,6 +42,8 @@ export default function DashboardPage() {
     profession: "",
     location: "",
   })
+
+  const adminView = user ? isAdminRole(user.role) : false
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -49,22 +63,30 @@ export default function DashboardPage() {
     }
   }, [user])
 
-  const orders = [
-    {
-      id: "CMD-829103",
-      date: "12 Juin 2026",
-      status: "Livré",
-      items: "1x Micromoteur électrique sans fil",
-      total: "1 290 TND",
-    },
-    {
-      id: "CMD-720194",
-      date: "04 Mai 2026",
-      status: "Livré",
-      items: "2x Composite photopolymérisable, 1x Kit fraises diamantées",
-      total: "785 TND",
-    },
-  ]
+  useEffect(() => {
+    if (!user) return
+
+    let active = true
+
+    async function loadOrders() {
+      try {
+        setOrdersLoading(true)
+        const data = await fetchOrders()
+        if (active) setOrders(data)
+      } catch {
+        if (active) {
+          toast.error("Impossible de charger les commandes.")
+        }
+      } finally {
+        if (active) setOrdersLoading(false)
+      }
+    }
+
+    loadOrders()
+    return () => {
+      active = false
+    }
+  }, [user])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,10 +116,12 @@ export default function DashboardPage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-              Mon Espace Personnel
+              {adminView ? "Espace Administrateur" : "Mon Espace Personnel"}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Gérez votre profil professionnel et suivez vos achats.
+              {adminView
+                ? "Consultez toutes les commandes des utilisateurs."
+                : "Gérez votre profil professionnel et suivez vos achats."}
             </p>
           </div>
           <Button
@@ -214,14 +238,22 @@ export default function DashboardPage() {
           <div className="md:col-span-2">
             <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-foreground">
-                <ShoppingBag className="size-5 text-primary" /> Historique des
-                commandes
+                <ShoppingBag className="size-5 text-primary" />
+                {adminView ? "Toutes les commandes" : "Historique des commandes"}
               </h2>
 
-              {orders.length === 0 ? (
+              {ordersLoading ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  Chargement des commandes...
+                </div>
+              ) : orders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
                   <Package className="mb-2 size-10" />
-                  <p>Vous n&apos;avez pas encore passé de commande.</p>
+                  <p>
+                    {adminView
+                      ? "Aucune commande enregistrée pour le moment."
+                      : "Vous n'avez pas encore passé de commande."}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -233,23 +265,27 @@ export default function DashboardPage() {
                       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-3 text-sm">
                         <div>
                           <span className="font-bold text-foreground">
-                            {order.id}
+                            {order.order_number}
                           </span>
                           <span className="ml-3 text-xs text-muted-foreground">
-                            {order.date}
+                            {formatOrderDate(order.created_at)}
                           </span>
+                          {adminView && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Client : {order.user_name} ({order.user_email})
+                            </p>
+                          )}
                         </div>
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
-                          <CheckCircle className="size-3.5 fill-success/15" />{" "}
-                          {order.status}
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-foreground">
+                          {order.status_display}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-4 text-sm">
                         <div className="truncate text-muted-foreground">
-                          {order.items}
+                          {formatOrderItemsSummary(order.items)}
                         </div>
                         <div className="shrink-0 font-bold text-primary">
-                          {order.total}
+                          {formatPrice(Number(order.final_amount))}
                         </div>
                       </div>
                     </div>

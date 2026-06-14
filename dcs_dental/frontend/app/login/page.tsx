@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Lock, Mail } from "lucide-react"
 import { toast } from "sonner"
 import { ShopLayout } from "@/components/shop-layout"
@@ -14,6 +14,8 @@ import { ApiError } from "@/lib/auth"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const nextPath = searchParams.get("next") || "/dashboard"
   const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -26,7 +28,7 @@ export default function LoginPage() {
     try {
       const session = await login({ email, password })
       toast.success(`Connexion réussie ! Bienvenue ${session.user.first_name}.`)
-      router.push("/dashboard")
+      router.push(nextPath.startsWith("/") ? nextPath : "/dashboard")
     } catch (error) {
       if (error instanceof ApiError) {
         toast.error(error.message)
