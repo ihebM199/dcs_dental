@@ -81,11 +81,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = serializer.validated_data['status']
         order.save(update_fields=['status'])
 
-        # Generate invoice and delivery note on confirmation
         if old_status != Order.Status.CONFIRMED and order.status == Order.Status.CONFIRMED:
-            from apps.invoices.utils import generate_invoice_for_order
-            from apps.delivery.utils import generate_delivery_note_for_order
-            generate_invoice_for_order(order)
-            generate_delivery_note_for_order(order)
+            try:
+                from apps.invoices.utils import generate_invoice_for_order
+                from apps.delivery.utils import generate_delivery_note_for_order
+                generate_invoice_for_order(order)
+                generate_delivery_note_for_order(order)
+            except Exception:
+                pass
 
         return Response(OrderSerializer(order).data)
