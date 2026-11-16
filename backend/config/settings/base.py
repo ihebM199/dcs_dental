@@ -5,6 +5,7 @@ Common settings shared between development and production.
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 from decouple import Csv, config
 
@@ -115,6 +116,28 @@ DATABASES = {
 DB_SSLMODE = config('DB_SSLMODE', default='')
 if DB_SSLMODE:
     DATABASES['default']['OPTIONS'] = {'sslmode': DB_SSLMODE}
+
+# Single-variable configuration, e.g. Neon:
+# DATABASE_URL=postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
+# When set, it takes precedence over the DB_* variables above.
+DATABASE_URL = config('DATABASE_URL', default='')
+if DATABASE_URL:
+    _db_url = urlparse(DATABASE_URL)
+    _db_options = {'sslmode': DB_SSLMODE or 'require'}
+    _db_query = parse_qs(_db_url.query)
+    if 'sslmode' in _db_query:
+        _db_options['sslmode'] = _db_query['sslmode'][0]
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': unquote(_db_url.path.lstrip('/')),
+            'USER': unquote(_db_url.username or ''),
+            'PASSWORD': unquote(_db_url.password or ''),
+            'HOST': _db_url.hostname or '',
+            'PORT': str(_db_url.port or 5432),
+            'OPTIONS': _db_options,
+        }
+    }
 
 # =============================================================================
 # AUTH
