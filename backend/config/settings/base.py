@@ -148,6 +148,19 @@ if DATABASE_URL:
         }
     }
 
+# Startup diagnostic (never prints secrets): shows where the DB config comes from.
+_SECRETS_ENV_FILE = os.environ.get('SECRETS_ENV_FILE', '/etc/secrets/.env')
+print(
+    '[dcs_dental] settings={} secret_file={} DATABASE_URL={} DB_HOST={} -> host={} port={}'.format(
+        os.environ.get('DJANGO_SETTINGS_MODULE', '-'),
+        'found' if os.path.isfile(_SECRETS_ENV_FILE) else 'absent',
+        'set' if DATABASE_URL else 'missing',
+        config('DB_HOST', default='db'),
+        DATABASES['default']['HOST'],
+        DATABASES['default']['PORT'],
+    )
+)
+
 # =============================================================================
 # AUTH
 # =============================================================================
