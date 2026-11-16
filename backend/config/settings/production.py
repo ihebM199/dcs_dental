@@ -3,6 +3,8 @@ Django production settings for DCS Dental project.
 """
 from .base import *  # noqa: F401,F403
 
+from decouple import Csv, config
+
 DEBUG = False
 
 # Security settings
@@ -17,7 +19,8 @@ SECURE_HSTS_PRELOAD = True
 
 # CORS - restrict in production
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'https://dcs-store.tn',
-]
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,https://dcs-store.tn',
+    cast=Csv(),
+)

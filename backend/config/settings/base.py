@@ -109,6 +109,13 @@ DATABASES = {
     }
 }
 
+# Optional SSL mode.
+# Required when using Render's *external* database URL (DB_SSLMODE=require),
+# not needed for the internal database URL.
+DB_SSLMODE = config('DB_SSLMODE', default='')
+if DB_SSLMODE:
+    DATABASES['default']['OPTIONS'] = {'sslmode': DB_SSLMODE}
+
 # =============================================================================
 # AUTH
 # =============================================================================
