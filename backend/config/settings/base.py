@@ -9,6 +9,11 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from decouple import Csv, config
 
+from ..secret_env import load_secret_env
+
+# Optional secret file (Render Secret Files, Docker secrets, ...).
+load_secret_env()
+
 # =============================================================================
 # PATHS
 # =============================================================================

@@ -3,9 +3,15 @@
 import os
 import sys
 
+from config.secret_env import load_secret_env
+
 
 def main():
     """Run administrative tasks."""
+    # Optional secret file (Render Secret Files, Docker secrets, ...).
+    # Loaded before choosing the settings module so DJANGO_SETTINGS_MODULE
+    # can come from the file too.
+    load_secret_env()
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
     try:
         from django.core.management import execute_from_command_line
