@@ -7,6 +7,15 @@ from decouple import Csv, config
 
 DEBUG = False
 
+# Render terminates TLS in front of the app
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://dcs-dental-backend.onrender.com',
+    cast=Csv(),
+)
+
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

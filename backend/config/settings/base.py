@@ -19,7 +19,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # =============================================================================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-dev-key')
 DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+ALLOWED_HOSTS = config(
+    'DJANGO_ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,.onrender.com',
+    cast=Csv(),
+)
 
 # =============================================================================
 # APPLICATION DEFINITION
