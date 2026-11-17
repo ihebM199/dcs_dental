@@ -66,3 +66,12 @@ CORS_ALLOWED_ORIGINS = config(
     default='http://localhost:3000,https://dcs-store.tn',
     cast=Csv(),
 )
+
+# Vercel preview URLs change on every deployment
+# (dcs-dental-<hash>-<team>.vercel.app and dcs-dental-git-<branch>-<team>.vercel.app),
+# so they are matched by pattern instead of being listed one by one.
+CORS_ALLOWED_ORIGIN_REGEXES = config(
+    'CORS_ALLOWED_ORIGIN_REGEXES',
+    default=r'^https://dcs-dental-[a-z0-9-]*-dcs-store-front\.vercel\.app$',
+    cast=Csv(),
+)
