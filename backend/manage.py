@@ -3,7 +3,7 @@
 import os
 import sys
 
-from config.secret_env import load_secret_env
+from config.secret_env import default_settings_module, load_secret_env
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     # Loaded before choosing the settings module so DJANGO_SETTINGS_MODULE
     # can come from the file too.
     load_secret_env()
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.development')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', default_settings_module())
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
