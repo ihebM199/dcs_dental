@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from decouple import Csv, config
 from django.core.exceptions import ImproperlyConfigured
 
-from ..secret_env import load_secret_env
+from ..secret_env import load_secret_env, source_of
 
 # Optional secret file (Render Secret Files, Docker secrets, ...).
 load_secret_env()
@@ -153,15 +153,9 @@ def _looks_like_placeholder(value: str) -> bool:
     return any(marker in lowered for marker in _DB_PLACEHOLDER_MARKERS)
 
 
-if DATABASE_URL and _looks_like_placeholder(DATABASE_URL):
-    raise ImproperlyConfigured(
-        'DATABASE_URL still contains template placeholders such as "xxxx" or '
-        '"<region>" instead of the real Neon connection string. Copy the real '
-        'pooled URL from the Neon console (Connect button) or with: '
-        'neon connection-string <branch> --pooled --ssl require'
-    )
+_IS_PLACEHOLDER = bool(DATABASE_URL) and _looks_like_placeholder(DATABASE_URL)
 
-if DATABASE_URL:
+if DATABASE_URL and not _IS_PLACEHOLDER:
     _db_url = urlparse(DATABASE_URL)
     _db_options = {'sslmode': DB_SSLMODE or 'require'}
     _db_query = parse_qs(_db_url.query)
@@ -182,15 +176,28 @@ if DATABASE_URL:
 # Startup diagnostic (never prints secrets): shows where the DB config comes from.
 _SECRETS_ENV_FILE = os.environ.get('SECRETS_ENV_FILE', '/etc/secrets/.env')
 print(
-    '[dcs_dental] settings={} secret_file={} DATABASE_URL={} DB_HOST={} -> host={} port={}'.format(
+    '[dcs_dental] settings={} secret_file={} DATABASE_URL={} ({}) DB_HOST={} -> host={} port={}'.format(
         os.environ.get('DJANGO_SETTINGS_MODULE', '-'),
         'found' if os.path.isfile(_SECRETS_ENV_FILE) else 'absent',
-        'set' if DATABASE_URL else 'missing',
+        'placeholder' if _IS_PLACEHOLDER else ('set' if DATABASE_URL else 'missing'),
+        source_of('DATABASE_URL'),
         config('DB_HOST', default='db'),
         DATABASES['default']['HOST'],
         DATABASES['default']['PORT'],
     )
 )
+
+if _IS_PLACEHOLDER:
+    raise ImproperlyConfigured(
+        'DATABASE_URL still contains template placeholders such as "xxxx" or '
+        '"<region>" instead of the real Neon connection string.\n'
+        'The value comes from DATABASE_URL={} ({}). Replace it there with the '
+        'real pooled URL, copied from the Neon console (Connect button) or '
+        'with: neon connection-string <branch> --pooled --ssl require'.format(
+            'set' if DATABASE_URL else 'missing',
+            source_of('DATABASE_URL'),
+        )
+    )
 
 # =============================================================================
 # AUTH

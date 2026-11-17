@@ -4,8 +4,32 @@ Django production settings for DCS Dental project.
 from .base import *  # noqa: F401,F403
 
 from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 
 DEBUG = False
+
+# -----------------------------------------------------------------------------
+# Fail fast on a configuration that cannot work in production.
+# A cryptic "connection refused" on localhost in the build log is far more
+# expensive than an explicit startup error.
+# -----------------------------------------------------------------------------
+if SECRET_KEY == 'django-insecure-dev-key':  # noqa: F405
+    # Warning only: the build step (migrate) does not need the key, and blocking
+    # the deploy here would be more confusing than useful.
+    print(
+        '[dcs_dental] WARNING: DJANGO_SECRET_KEY is the insecure development '
+        'default. Set a long random value in production.'
+    )
+
+_LOCAL_DB_HOSTS = {'', 'db', 'localhost', '127.0.0.1', '0.0.0.0', '::1'}
+if not DATABASE_URL and config('DB_HOST', default='db') in _LOCAL_DB_HOSTS:  # noqa: F405
+    raise ImproperlyConfigured(
+        'No production database configured: DATABASE_URL is missing and '
+        'DB_HOST points to a local/container host ({!r}). Set DATABASE_URL to '
+        'the Neon (or other hosted) connection string.'.format(
+            config('DB_HOST', default='db')
+        )
+    )
 
 # Render terminates TLS in front of the app
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
