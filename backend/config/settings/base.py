@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
 from decouple import Csv, config
+from django.core.exceptions import ImproperlyConfigured
 
 from ..secret_env import load_secret_env
 
@@ -129,7 +130,37 @@ if DB_SSLMODE:
 # Single-variable configuration, e.g. Neon:
 # DATABASE_URL=postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
 # When set, it takes precedence over the DB_* variables above.
-DATABASE_URL = config('DATABASE_URL', default='')
+DATABASE_URL = config('DATABASE_URL', default='').strip()
+
+# Placeholders are the most common copy/paste mistake: the template text is
+# kept verbatim and the deploy fails much later with a cryptic DNS error.
+_DB_PLACEHOLDER_MARKERS = (
+    '<',
+    '>',
+    'xxxx',
+    'your-host',
+    'your_host',
+    'your-db',
+    'changeme',
+    'replace-me',
+    'placeholder',
+    'example.com',
+)
+
+
+def _looks_like_placeholder(value: str) -> bool:
+    lowered = value.lower()
+    return any(marker in lowered for marker in _DB_PLACEHOLDER_MARKERS)
+
+
+if DATABASE_URL and _looks_like_placeholder(DATABASE_URL):
+    raise ImproperlyConfigured(
+        'DATABASE_URL still contains template placeholders such as "xxxx" or '
+        '"<region>" instead of the real Neon connection string. Copy the real '
+        'pooled URL from the Neon console (Connect button) or with: '
+        'neon connection-string <branch> --pooled --ssl require'
+    )
+
 if DATABASE_URL:
     _db_url = urlparse(DATABASE_URL)
     _db_options = {'sslmode': DB_SSLMODE or 'require'}
