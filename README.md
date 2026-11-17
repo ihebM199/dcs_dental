@@ -185,6 +185,21 @@ pytest --cov=apps --cov-report=term-missing
 
 ---
 
+## Déploiement
+
+| Composant | Plateforme | URL |
+|---|---|---|
+| Backend (Django REST) | Render | https://dcs-dental-backend.onrender.com |
+| Documentation API | Render | https://dcs-dental-backend.onrender.com/api/docs/ |
+| Frontend (Next.js) | Vercel | https://dcs-dental-dcs-store-front.vercel.app |
+| Base de données | Neon (PostgreSQL) | branche `production` |
+
+- Le frontend est déployé depuis la branche `dev`, avec le **Root Directory** réglé sur `dcs_dental/frontend`.
+- Variable Vercel : `NEXT_PUBLIC_API_URL=https://dcs-dental-backend.onrender.com` (lue à la compilation).
+- Côté Render : `CORS_ALLOWED_ORIGINS` liste les domaines du frontend et `CORS_ALLOWED_ORIGIN_REGEXES` autorise les previews `*.vercel.app`.
+
+---
+
 ## Licence
 
 Projet académique — TEK-UP University, ING-4-J-SDIA-F-A.
