@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Lock, Mail } from "lucide-react"
 import { toast } from "sonner"
@@ -13,6 +13,24 @@ import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/auth"
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-md px-4 py-16">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+            <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="mt-3 h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="mt-8 h-10 w-full animate-pulse rounded bg-muted" />
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const nextPath = searchParams.get("next") || "/dashboard"
