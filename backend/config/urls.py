@@ -4,14 +4,34 @@ URL configuration for DCS Dental project.
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path, re_path
+from django.views.decorators.http import require_safe
 from django.views.static import serve as media_serve
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
 
+
+@require_safe
+def health(request):
+    """Root/health endpoint so uptime checks and Health Checks get a 200."""
+    return JsonResponse(
+        {
+            'status': 'ok',
+            'service': 'dcs-dental-backend',
+            'docs': request.build_absolute_uri('/api/docs/'),
+            'admin': request.build_absolute_uri('/admin/'),
+        }
+    )
+
+
 urlpatterns = [
+    # Health check (Render pings "/" and treats 4xx/5xx as a failure)
+    path('', health, name='health'),
+    path('healthz/', health, name='healthz'),
+
     # Django admin
     path('admin/', admin.site.urls),
 
