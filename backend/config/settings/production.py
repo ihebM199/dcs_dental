@@ -31,6 +31,15 @@ if not DATABASE_URL and config('DB_HOST', default='db') in _LOCAL_DB_HOSTS:  # n
         )
     )
 
+# -----------------------------------------------------------------------------
+# STATIC FILES (served by WhiteNoise, collected during the build)
+# -----------------------------------------------------------------------------
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+WHITENOISE_MAX_AGE = 31536000
+
 # Render terminates TLS in front of the app
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
